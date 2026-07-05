@@ -15,42 +15,38 @@ class F1App(ctk.CTk):
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
         fastf1.Cache.enable_cache(self.cache_dir)
-        print("Cache successfully enabled!")
-        self.session_object=None
-        self.results = None
-        self.key = None
-        self.year=None
-        self.race=None
-        self.choose_driver=None
-        self.choose_driver2=None
-        self.main_frame = None
-        self.click_button=None
-        self.frame1 = None
-        self.frame2 = None
-        self.race_year=None
-        self.race_wanted=None
-        self.session = None
-        self.session1= None
-        self.driver=None
-        self.all_details_needed=None
-        self.graph_frame=None
-        self.driver_frame=None
-        self.driver1_abbreviation=None
-        self.driver2_abbreviation=None
-        self.graph_frame2=None
-        self.graph_frame3=None
-        self.graph_frame4=None
-        self.graph_frame5=None
-        self.graph_frame6=None
-        self.telemetry2=None
-        self.telemetry=None
+        print("Cache successfully enabled!" )
+        self.session_object=None    #The session we are currently looking at
+        self.results = None  #the results of the session
+        self.key = None   #key of the session stored in hash table
+        self.year=None   #entry box that allows user to enter year of race they want to choose
+        self.race=None   #entry box that allows user to enter name of race they want to choose
+        self.choose_driver=None   #first driver chosen
+        self.choose_driver2=None #second driver chosen
+        self.main_frame = None #frame that holds inputs for user to enter drivers they want to compare 
+        self.click_button=None #button that user clicks to direct to main_frame
+        self.frame1 = None #frame that holds the information about the driver at the first position the user has chosen
+        self.frame2 = None #frame that holds the information about the driver at the second position the user has chosen
+        self.race_year=None  #year user has chosen
+        self.race_wanted=None #race user has chosen
+        self.all_details_needed=None  #dataset used for graphs
+        self.graph_frame=None #frame that stores the Sector 1 Times Graph
+        self.driver1_abbreviation=None #stores abbreviation of first driver
+        self.driver2_abbreviation=None #stores abbreviation of second driver
+        self.graph_frame2=None  #frame that stores the Sector 1 Times Graph
+        self.graph_frame3=None  #frame that stores the Sector 2 Times Graph
+        self.graph_frame4=None  #frame that stores the Sector 3 Times Graph
+        self.graph_frame5=None  #frame that stores the Lap Times Graph
+        self.graph_frame6=None  #frame that stores the Lap Speeds Graph
+        self.telemetry2=None  #telemetry of first driver
+        self.telemetry=None #telemetry of second driver
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        self.choose_a_race()
-        self.list_of_abbreviations=[]
-        self.list_of_abbreviations2 = []
-        self.i=0
-        self.j=0
+        self.list_of_abbreviations=[]  #array that stores abbreviations of first drivers chosen
+        self.list_of_abbreviations2 = [] #array that stores abbreviations of second drivers chosen
+        self.i=0 #this variable is used to update the position of the most recent item added to list_of_abbreviations
+        self.j=0 #this variable is used to update the position of the most recent item added to list_of_abbreviations2
+        self.choose_a_race() #process automatically runs when an object is made
     def choose_a_race(self):
         for frame in self.winfo_children():
             if frame.winfo_exists():
@@ -176,15 +172,15 @@ class F1App(ctk.CTk):
             app.after(self.temporary_message("Please enter a number"))
 
     def add_to_list1(self,value):
-        checks=self.check_driver(value,self.frame1)
+        checks=self.check_driver(value,self.frame1)  #add checks to array list_of_abbreviations
         self.list_of_abbreviations.append(checks)
         self.i+=1
     def add_to_list2(self,value):
-        checks=self.check_driver(value,self.frame2)
+        checks=self.check_driver(value,self.frame2)   #add checks to array list_of_abbreviations2
         self.list_of_abbreviations2.append(checks)
         self.j+=1
     def load_graphs_thread(self):
-        self.view_graphs.configure(text="Loading Graphs", state="disabled")
+        self.view_graphs.configure(text="Loading Graphs", state="disabled")  #change button to disabled while the graph is loading
         self.update_idletasks()
         loading_thread1 = threading.Thread(target=self.load_graph_data())
         loading_thread1.daemon = False
@@ -195,7 +191,7 @@ class F1App(ctk.CTk):
             self.driver2_abbreviation = self.list_of_abbreviations2[self.j - 1]
             self.driver1 = self.session_object.laps.pick_driver(self.driver1_abbreviation)
             all_details_needed = self.driver1[['Driver','LapNumber', 'LapTime', 'Sector1Time', 'Sector2Time', 'Sector3Time']].copy()
-            all_details_needed['Sector1Seconds']=all_details_needed['Sector1Time'].dt.total_seconds()
+            all_details_needed['Sector1Seconds']=all_details_needed['Sector1Time'].dt.total_seconds()  #convert the times to seconds eg.00:01:27 becomes 87 
             all_details_needed['Sector2Seconds'] = all_details_needed['Sector2Time'].dt.total_seconds()
             all_details_needed['Sector3Seconds'] = all_details_needed['Sector3Time'].dt.total_seconds()
             all_details_needed['LapTimeSeconds']= all_details_needed['LapTime'].dt.total_seconds()
@@ -213,7 +209,6 @@ class F1App(ctk.CTk):
             pd.set_option('display.max_rows', None)
             pd.set_option('display.width', 1000)
             self.combined_laps=pd.concat([all_details_needed, all_details_needed2], ignore_index=True)
-            print(self.combined_laps)
             self.after(0,lambda: self.load_graphs())
     def load_graphs(self):
         for frame in self.winfo_children():
@@ -234,7 +229,7 @@ class F1App(ctk.CTk):
             hue='Driver',
             s=50,
             ax=ax)
-        canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
+        canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)    #convert the graph to a customtkinter widget
         canvas.draw()
         canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
         go_back_to_drivers=ctk.CTkButton(self.graph_frame, text="Back to Drivers",command= lambda:self.load_dates())
@@ -363,7 +358,6 @@ class F1App(ctk.CTk):
         self.combined_telemetry = pd.concat([self.telemetry1, self.telemetry2], ignore_index=True)
         split_condition = (self.combined_telemetry['Seconds'] == 0).cumsum()
         self.combined_telemetry['Driver'] = np.where(split_condition == 1, self.driver1_abbreviation,self.driver2_abbreviation)
-        print(self.combined_telemetry)
         self.graph_frame6 = ctk.CTkFrame(master=self)
         self.graph_frame6.rowconfigure((0, 1, 2), weight=1)
         self.graph_frame6.columnconfigure((0), weight=1)
